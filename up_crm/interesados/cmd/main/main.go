@@ -8,20 +8,20 @@ import (
 	"net/http"
 	"time"
 
+	"upcrm.com/interesados/internal/controller/interesados"
+	httpHandler "upcrm.com/interesados/internal/handler/http"
+	"upcrm.com/interesados/internal/repository/memory"
 	"upcrm.com/pkg/discovery/consul"
 	discovery "upcrm.com/pkg/registry"
-	"upcrm.com/prospectos/internal/controller/prospectos"
-	httphandler "upcrm.com/prospectos/internal/handler/http"
-	"upcrm.com/prospectos/internal/repository/memory"
 )
 
-const servicename = "prospectos"
+const servicename = "interesados"
 
 func main() {
 	var port int
-	flag.IntVar(&port, "port", 8082, "API handler port")
+	flag.IntVar(&port, "port", 8081, "API handler port")
 	flag.Parse()
-	log.Printf("Starting prospectos service in port %d", port)
+	log.Printf("Starting rating service on port %d", port)
 	registry, err := consul.NewRegistry("localhost:8500")
 	if err != nil {
 		panic(err)
@@ -41,14 +41,13 @@ func main() {
 			time.Sleep(1 * time.Second)
 		}
 	}()
-	defer registry.Deregister(ctx, instanceID, servicename)
-	r := memory.New()
-	c := prospectos.New(r)
-	h := httphandler.New(c)
 
-	http.Handle("/Prospecto", http.HandlerFunc(h.GetProspecto))
+	defer registry.Deregister(ctx, instanceID, servicename)
+	repo := memory.New()
+	ctrl := interesados.New(repo)
+	h := httpHandler.New(ctrl)
+	http.Handle("/interesados", http.HandlerFunc(h.Handler))
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
 		panic(err)
 	}
-
 }
