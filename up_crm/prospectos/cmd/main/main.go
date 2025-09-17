@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"upcrm.com/pkg/discovery/consul"
@@ -22,14 +23,14 @@ func main() {
 	flag.IntVar(&port, "port", 8082, "API handler port")
 	flag.Parse()
 	log.Printf("Starting prospectos service in port %d", port)
-	registry, err := consul.NewRegistry("localhost:8500")
+	registry, err := consul.NewRegistry(os.Getenv("CONSUL_HTTP_ADDR"))
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error creating Consul registry: %v", err)
 	}
 
 	ctx := context.Background()
 	instanceID := discovery.GenerateINstanceID(servicename)
-	if err := registry.Register(ctx, instanceID, servicename, fmt.Sprintf("localhost:%d", port)); err != nil {
+	if err := registry.Register(ctx, instanceID, servicename, fmt.Sprintf("prospectos:%d", port)); err != nil {
 		panic(err)
 	}
 
@@ -46,7 +47,7 @@ func main() {
 	c := prospectos.New(r)
 	h := httphandler.New(c)
 
-	http.Handle("/Prospecto", http.HandlerFunc(h.GetProspecto))
+	http.Handle("/prospectos", http.HandlerFunc(h.GetProspecto))
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
 		panic(err)
 	}

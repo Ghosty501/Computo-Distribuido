@@ -1,0 +1,43 @@
+
+
+services:
+  consul:
+    image: consul:1.15
+    container_name: consul
+    ports:
+      - "8500:8500"   # UI web
+      - "8600:8600/udp" # DNS
+    networks:
+      - app-network
+
+  interesados:
+    build:
+      context: .
+      dockerfile: Dockerfile.interesados
+    container_name: interesados
+    depends_on:
+      - consul
+    environment:
+      - CONSUL_HTTP_ADDR=http://consul:8500
+    ports:
+      - "8081:8081"
+    networks:
+      - app-network
+
+  prospectos:
+    build:
+      context: .
+      dockerfile: Dockerfile.prospectos
+    container_name: prospectos
+    depends_on:
+      - consul
+    environment:
+      - CONSUL_HTTP_ADDR=http://consul:8500
+    ports:
+      - "8082:8082"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
