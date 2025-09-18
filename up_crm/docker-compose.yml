@@ -38,6 +38,20 @@ services:
     networks:
       - app-network
 
+  inscritos:
+    build:
+      context: .
+      dockerfile: Dockerfile.inscritos
+    container_name: inscritos
+    depends_on:
+      - consul
+    environment:
+      - CONSUL_HTTP_ADDR=http://consul:8500
+    ports:
+      - "8083:8083"
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
